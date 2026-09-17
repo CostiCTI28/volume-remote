@@ -21,20 +21,19 @@ git push -u origin main
 
 La primul push, cele 2 workflow-uri (`.github/workflows/build-windows.yml` si `build-android.yml`) se declanseaza automat.
 
-## 2. Ia executabilele compilate
+## 2. Ia APK-ul compilat
 
-Pe GitHub: tab **Actions** → alege rularea → sectiunea **Artifacts**:
-- `VolumeAgent-windows` → contine `VolumeAgent.exe` + `install_windows_agent.bat`
-- `VolumeRemote-apk` → contine `app-debug.apk`
+Pe GitHub: tab **Actions** → alege rularea → sectiunea **Artifacts** → `VolumeRemote-apk` (contine `app-debug.apk`).
 
-## 3. Instaleaza pe laptop (Windows)
+## 3. Instaleaza pe laptop (Windows) — ruleaza direct, fara compilare
 
-1. Descarca si dezarhiveaza `VolumeAgent-windows`.
-2. Ruleaza `install_windows_agent.bat` (deschide portul 5050 in firewall si porneste agentul).
-3. In consola apare IP-ul laptopului, ex: `Volume Agent ruleaza pe 192.168.1.100:5050`. Noteaza-l.
-4. (Optional) Pentru pornire automata la boot: copiaza folderul in `shell:startup` (Win+R → scrie `shell:startup` → Enter).
+1. Instaleaza Python de pe python.org (bifeaza "Add python.exe to PATH" la instalare) — o singura data.
+2. Copiaza folderul `windows-agent` pe laptop.
+3. Dubla-click pe `START.bat` (instaleaza automat `pycaw`/`comtypes`, deschide portul 5050 in firewall si porneste agentul).
+4. Verifica in consola IP-ul laptopului, ex: `Volume Agent ruleaza pe 192.168.1.100:5050`. Noteaza-l.
+5. (Optional) Pentru pornire automata la boot: copiaza scurtatura catre `START.bat` in `shell:startup` (Win+R → scrie `shell:startup` → Enter).
 
-Token-ul implicit e `schimba-ma`, definit in `volume_agent.py` (variabila `TOKEN`). Schimba-l inainte de compilare pentru siguranta.
+Token-ul implicit e `schimba-ma`, definit in `volume_agent.py` (variabila `TOKEN`). Schimba-l pentru siguranta.
 
 ## 4. Instaleaza pe telefon (Android)
 

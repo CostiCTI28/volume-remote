@@ -22,6 +22,15 @@ jobs:
       - name: Configureaza Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Accepta licentele SDK
+        run: yes | sdkmanager --licenses || true
+
+      - name: Instaleaza platforma si build-tools
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Scrie local.properties
+        run: echo "sdk.dir=${ANDROID_SDK_ROOT}" > android-app/local.properties
+
       - name: Instaleaza Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
