@@ -1,9 +1,11 @@
 import json
 import socket
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import traceback
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import urlparse, parse_qs
 
 from ctypes import cast, POINTER
+import comtypes
 from comtypes import CLSCTX_ALL
 from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
@@ -35,6 +37,12 @@ def set_mute(state: bool):
 
 
 class Handler(BaseHTTPRequestHandler):
+    # HTTP/1.1 + Content-Length explicit peste tot, ca sa nu se rupa
+    # conexiunea inainte ca clientul sa primeasca raspunsul complet.
+    protocol_version = "HTTP/1.1"
+    # raspunsurile sunt scurte; nu tinem conexiunea deschisa degeaba
+    close_connection = True
+
     def _check_token(self, qs):
         return qs.get("token", [""])[0] == TOKEN
 
@@ -47,6 +55,28 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_GET(self):
+        # Orice exceptie de aici in jos (COM/pycaw poate arunca oricand)
+        # e prinsa si trimisa ca JSON, nu lasata sa taie conexiunea.
+        try:
+            self._handle_get()
+        except Exception as e:
+            traceback.print_exc()
+            try:
+                self._send_json({"error": str(e)}, 500)
+            except Exception:
+                pass  # conexiunea era deja compromisa, nimic de facut
+
+    def _handle_get(self):
+        # pycaw foloseste COM; fiecare thread care il apeleaza trebuie
+        # sa aiba apartamentul COM initializat (altfel arunca eroare
+        # si conexiunea moare fara raspuns -> "unexpected end of stream").
+        try:
+            comtypes.CoInitialize()
+        except OSError:
+            pass  # deja initializat pe acest thread
+        except Exception:
+            pass
+
         parsed = urlparse(self.path)
         qs = parse_qs(parsed.query)
 
@@ -81,14 +111,19 @@ class Handler(BaseHTTPRequestHandler):
         pass  # nu mai afisam fiecare request in consola
 
 
+class Server(ThreadingHTTPServer):
+    daemon_threads = True      # firele mor odata cu procesul
+    allow_reuse_address = True # repornire imediata dupa oprire
+
+
 def main():
-    server = HTTPServer(("0.0.0.0", PORT), Handler)
+    server = Server(("0.0.0.0", PORT), Handler)
     try:
         ip = socket.gethostbyname(socket.gethostname())
     except Exception:
         ip = "127.0.0.1"
     print(f"Volume Agent ruleaza pe {ip}:{PORT} (token={TOKEN})")
-    print("Lasa fereastra deschisa (sau ruleaza VolumeAgent.exe in fundal).")
+    print("Lasa fereastra deschisa. Opreste cu Ctrl+C.")
     server.serve_forever()
 
 
