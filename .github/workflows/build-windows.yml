@@ -1,0 +1,37 @@
+name: Build Windows Volume Agent
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'windows-agent/**'
+      - '.github/workflows/build-windows.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instaleaza dependinte
+        run: |
+          cd windows-agent
+          pip install -r requirements.txt
+
+      - name: Compileaza exe
+        run: |
+          cd windows-agent
+          pyinstaller --onefile --noconsole --name VolumeAgent volume_agent.py
+
+      - name: Incarca artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VolumeAgent-windows
+          path: |
+            windows-agent/dist/VolumeAgent.exe
+            windows-agent/install_windows_agent.bat
