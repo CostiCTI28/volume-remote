@@ -19,17 +19,14 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configureaza Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accepta licentele SDK
-        run: yes | sdkmanager --licenses || true
+      - name: Accepta licentele SDK (preinstalat pe runner)
+        run: yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null
 
       - name: Instaleaza platforma si build-tools
-        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+        run: ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" > /dev/null
 
       - name: Scrie local.properties
-        run: echo "sdk.dir=${ANDROID_SDK_ROOT}" > android-app/local.properties
+        run: echo "sdk.dir=${ANDROID_HOME}" > android-app/local.properties
 
       - name: Instaleaza Gradle
         uses: gradle/actions/setup-gradle@v4
